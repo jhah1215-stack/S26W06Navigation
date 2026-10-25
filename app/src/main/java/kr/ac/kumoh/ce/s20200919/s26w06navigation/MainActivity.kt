@@ -15,7 +15,7 @@ import androidx.navigation3.runtime.rememberNavBackStack
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.ui.NavDisplay
 import kr.ac.kumoh.ce.s20200919.s26w06navigation.navigation.PokemonRoute
-import kr.ac.kumoh.ce.s20200919.s26w06navigation.repository.MockPokemonRepository
+import kr.ac.kumoh.ce.s20200919.s26w06navigation.repository.ApiPokemonRepository
 import kr.ac.kumoh.ce.s20200919.s26w06navigation.repository.PokemonRepository
 import kr.ac.kumoh.ce.s20200919.s26w06navigation.ui.screen.PokemonDetailScreen
 import kr.ac.kumoh.ce.s20200919.s26w06navigation.ui.screen.PokemonListScreen
@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val repository: PokemonRepository = MockPokemonRepository()
+        val repository: PokemonRepository = ApiPokemonRepository()
 
         setContent {
             S26W06NavigationTheme {
@@ -46,11 +46,8 @@ fun MainScreen(
         NavDisplay(
             modifier = Modifier.padding(innerPadding),
             backStack = backStack,
-
             entryDecorators = listOf(
-
                 rememberSaveableStateHolderNavEntryDecorator(),
-
                 rememberViewModelStoreNavEntryDecorator()
             ),
             entryProvider = entryProvider {
