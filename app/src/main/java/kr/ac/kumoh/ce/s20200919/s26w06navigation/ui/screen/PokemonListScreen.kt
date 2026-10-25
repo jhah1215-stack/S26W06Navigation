@@ -1,6 +1,7 @@
 package kr.ac.kumoh.ce.s20200919.s26w06navigation.ui.screen
 
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
