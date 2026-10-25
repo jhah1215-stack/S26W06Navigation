@@ -13,13 +13,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -29,6 +33,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import kr.ac.kumoh.ce.s20200919.s26w06navigation.model.Pokemon
 import kr.ac.kumoh.ce.s20200919.s26w06navigation.repository.PokemonRepository
+import kr.ac.kumoh.ce.s20200919.s26w06navigation.viewmodel.PokemonListUiState
 import kr.ac.kumoh.ce.s20200919.s26w06navigation.viewmodel.PokemonListViewModel
 
 @Composable
@@ -39,28 +44,93 @@ fun PokemonListScreen(
     },
     onNavigateToDetail: (Int) -> Unit,
 ) {
-    val pokemonList by viewModel.pokemonList.collectAsStateWithLifecycle()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val query by viewModel.query.collectAsStateWithLifecycle()
 
-    // 목록이 아직 비어 있으면 로딩 표시 (흰 화면 대신)
-    if (pokemonList.isEmpty()) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center,
-        ) {
-            CircularProgressIndicator()
+    when (val state = uiState) {
+        is PokemonListUiState.Loading -> {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
+            ) {
+                CircularProgressIndicator()
+            }
         }
-        return
-    }
 
-    LazyColumn(
-        contentPadding = PaddingValues(16.dp),
-        verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) { // key값 중복 때문에 계속 실행 실패 하던 부분
-        items(pokemonList) { pokemon ->
-            PokemonCard(
-                pokemon = pokemon,
-                onClick = { onNavigateToDetail(pokemon.id) }
-            )
+        is PokemonListUiState.Error -> {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    text = "목록을 불러오지 못했어요.\n네트워크를 확인해 주세요.",
+                    style = MaterialTheme.typography.bodyLarge,
+                )
+                Button(
+                    onClick = { viewModel.load() },
+                    modifier = Modifier.padding(top = 16.dp),
+                ) {
+                    Text("다시 시도")
+                }
+            }
+        }
+
+        is PokemonListUiState.Success -> {
+            // 목록이나 검색어가 바뀔 때만 다시 계산
+            val filtered = remember(state.pokemonList, query) {
+                val q = query.trim()
+                if (q.isEmpty()) {
+                    state.pokemonList
+                } else {
+                    state.pokemonList.filter {
+                        it.name.contains(q, ignoreCase = true) ||
+                                it.type.contains(q, ignoreCase = true)
+                    }
+                }
+            }
+
+            Column(modifier = Modifier.fillMaxSize()) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = viewModel::onQueryChange,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    placeholder = { Text("포켓몬 이름 검색") },
+                    trailingIcon = {
+                        if (query.isNotEmpty()) {
+                            IconButton(onClick = { viewModel.onQueryChange("") }) {
+                                Text("✕")  // 아이콘 라이브러리 없이 글자로 대체
+                            }
+                        }
+                    },
+                    singleLine = true,
+                )
+
+                if (filtered.isEmpty()) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text("검색 결과가 없어요.")
+                    }
+                } else {
+                    LazyColumn(
+                        contentPadding = PaddingValues(
+                            start = 16.dp, end = 16.dp, bottom = 16.dp
+                        ),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        items(filtered) { pokemon ->
+                            PokemonCard(
+                                pokemon = pokemon,
+                                onClick = { onNavigateToDetail(pokemon.id) }
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
