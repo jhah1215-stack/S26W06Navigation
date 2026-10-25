@@ -55,8 +55,8 @@ fun PokemonListScreen(
     LazyColumn(
         contentPadding = PaddingValues(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
-    ) {
-        items(pokemonList, key = { it.id }) { pokemon ->
+    ) { // key값 중복 때문에 계속 실행 실패 하던 부분
+        items(pokemonList) { pokemon ->
             PokemonCard(
                 pokemon = pokemon,
                 onClick = { onNavigateToDetail(pokemon.id) }
